@@ -38,11 +38,12 @@
 ;	arg:	1 - address of string
 ;	ret:	none
 %macro print 1
+	mov ax, [sp+2]
 	push ax
 	push dx
 
 	mov ah, 0x09
-	mov dx, %1
+	mov dx, ax
 	int 0x21
 
 	pop dx

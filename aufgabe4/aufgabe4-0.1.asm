@@ -8,11 +8,8 @@
 ; VERSION:		0.1
 ;-----------------------------------------------------
 
-%include "stdio.mac"
-%include "string.mac"
-%include "type.mac"
-
 CPU 8086
+
 
 %define MAX 0x06
 %define ACT 0x01
@@ -52,6 +49,9 @@ SEGMENT STACK STACK USE16
 
 
 SEGMENT CODE USE16
+%include "stdio.mac"
+%include "string.mac"
+%include "type.mac"
 ..start:
 	; INIT SEGMENTS
 	mov ax, DATA
@@ -60,10 +60,10 @@ SEGMENT CODE USE16
 
 	; INPUT
 	mov 	cx, 4
-	mov 	si, msg_partei1
+	mov		dx, msg_partei1
 	mov		di, partei1_ascii
 .loop_in:
-	print	si
+	call	print
 	scan	di
 	newline
 
@@ -73,7 +73,7 @@ SEGMENT CODE USE16
 		newline
 	%endif
 
-	add		si, 19
+	add		dx, 19
 
 	%ifdef DEBUG
 		add		di, 7				; DEBUG - We need to point 9b further.
@@ -120,17 +120,20 @@ SEGMENT CODE USE16
 	dude ax, partei_ascii
 
 	; OUTPUT - SUM
-	print msg_partei_ges
-	printnl partei_ascii
+
+	mov		dx, msg_partei_ges
+	call	print
+	mov		dx, partei_ascii
+	call	printnl
 
 	jmp		exit
 
 .error_not_numeric:
-	printnl error_not_numeric
+;	printnl error_not_numeric
 	jmp		exit
 
 .error_overflow:
-	printnl error_overflow
+;	printnl error_overflow
 
 
 	; DOS - RETURN
