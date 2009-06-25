@@ -1,0 +1,98 @@
+;---------------------------------------------------------
+; PROGRAM:		Caesar
+; DESCRIPTION:	Macros to en-/decode with caesar algorithm
+; AUTHOR:		Alexander Meinke <ameinke@online.de>
+; LICENCE:		Public Domain
+; ASSEMBLER:	NASM 2.05.01
+; LINKER:		ALINK (DOS)
+; VERSION:		0.1
+;---------------------------------------------------------
+
+%include "string.mac"
+
+%ifndef CAESAR_MAC
+	%define CAESAR_MAC
+
+; ENCODE LOWERCASE "$" TERMINATED STRING WITH CAESAR ALGORITHM
+;	arg:	1 - STRING TO ENCODE
+;			2 - BUFFER FOR ENCODED STRING
+;	ret:	none
+%macro caesar_enc 2
+	push ax
+	push bx
+	push cx
+	push si
+	push di
+
+	mov si, %1
+	mov di, %2
+	strlen si
+	mov bx, cx
+%%.loop:
+	mov al, [si]
+	cmp al, "$"
+	je %%.hop
+	cmp al, " "
+	je %%.hop
+	add ax, bx
+	cmp al, "z"
+	jle %%.hop
+	sub al, 26
+%%.hop:
+	mov [di], al
+	cmp cx, 0
+	je %%.exit
+	dec cx
+	inc si
+	inc di
+	jmp %%.loop
+%%.exit:
+	pop di
+	pop si
+	pop cx
+	pop bx
+	pop ax
+%endmacro
+
+; DECODE UPPERCASE "$" TERMINATED STRING WITH CAESAR ALGORITHM
+;	arg:	1 - STRING TO DECODE
+;			2 - BUFFER FOR DECODED STRING
+;	ret:	none
+%macro caesar_dec 2
+	push ax
+	push bx
+	push cx
+	push si
+	push di
+
+	mov si, %1
+	mov di, %2
+	strlen si
+	mov bx, cx
+%%.loop:
+	mov al, [si]
+	cmp al, "$"
+	je %%.hop
+	cmp al, " "
+	je %%.hop
+	sub ax, bx
+	cmp al, "A"
+	jge %%.hop
+	add al, 26
+%%.hop:
+	mov [di], al
+	cmp cx, 0
+	je %%.exit
+	dec cx
+	inc si
+	inc di
+	jmp %%.loop
+%%.exit:
+	pop di
+	pop si
+	pop cx
+	pop bx
+	pop ax
+%endmacro
+
+%endif

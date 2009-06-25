@@ -1,0 +1,42 @@
+%ifndef STDIO_MAC
+	%define STDIO_MAC
+
+SEGMENT .data
+	VIDEO:		equ 0x000B8000
+	STDATTR:	equ 0x02
+	X_POS:		db	0x00
+	Y_POS:		db	0x00
+
+
+SEGMENT .text
+
+; PRINT CHAR
+;	arg:	1 - character (byte)
+;	ret:	none
+%macro printc 1
+%endmacro
+
+; PRINT CHAR AT X, Y
+;	arg:	1 - character (byte)
+;			2 - x
+;			3 - y
+;	ret:	none
+%macro printc 3
+%endmacro
+
+; PRINT STRING OF N CHAR
+;	arg:	1 - address of string
+;			2 - N
+;	ret:	none
+%macro printcn 2
+%endmacro
+
+; PRINT STRING OF N CHAR AT X, Y
+;	arg:	1 - address of string
+;			2 - N
+;			3 - X
+;			4 - Y
+%macro printcn 4
+%endmacro
+
+%endif

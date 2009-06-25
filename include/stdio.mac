@@ -1,0 +1,205 @@
+;-----------------------------------------------------
+; PROGRAM:		stdio
+; DESCRIPTION:	Standard input/output macros
+; AUTHOR:		Alexander Meinke <ameinke@online.de>
+; LICENCE:		Public Domain
+; ASSEMBLER:	NASM 2.05.01
+; LINKER:		ALINK (DOS)
+; VERSION:		0.1
+;-----------------------------------------------------
+
+
+%ifndef STDIO_MAC
+	%define STDIO_MAC
+
+; PRINT CHARACTER (DOS)
+;	arg:	1 - char
+;	ret:	none
+%macro printc 1
+	push ax
+	push dx
+
+	mov ah, 0x02
+	mov dl, %1
+	int 0x21
+
+	pop dx
+	pop ax
+%endmacro
+
+; PRINT NEWLINE (DOS)
+;	arg:	none
+;	ret:	none
+%macro newline 0
+	printc 0x0A
+%endmacro
+
+; PRINT "$" TERMINATED STRING (DOS)
+;	arg:	1 - address of string
+;	ret:	none
+%macro print 1
+	push ax
+	push dx
+
+	mov ah, 0x09
+	mov dx, %1
+	int 0x21
+
+	pop dx
+	pop ax
+%endmacro
+
+; PRINT "$" TERMINATED STRING AND NEWLINE (DOS)
+;	arg:	1 - address of string
+;	ret:	none
+%macro printnl 1
+	print %1
+	newline
+%endmacro
+
+; TODO
+;	* the user should only pass a reserved section of bytes
+; READ STRING AND ADD TERMINATING "$" CHAR (DOS)
+;	arg:	1 - address to following structure
+;				db		255			- max. chars to read
+;				resb	1			- chars read
+;				times	255 db 0	- buffer itself
+;	ret:	none
+%macro scan 1
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+
+	mov ah, 0x0A
+	mov dx, %1
+	int 0x21
+
+	mov bx, [%1+1]					; get chars read
+	and bx, 0x00FF					; only use the low byte
+	mov [%1+bx+2], BYTE "$"			; add terminating char to string
+
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+%endmacro
+
+; CHAR IS LOWERCASE
+; 	arg:	1 - char
+;	ret:	cx - "n" false, "y" true
+%macro islower 1
+	push ax
+
+	mov al, %1
+	mov cx, "y"
+	cmp al, "a"
+	jl %%.false
+	cmp al, "z"
+	jg %%.false
+	jmp %%.exit
+%%.false:
+	mov cx, "n"
+%%.exit:
+	pop ax
+%endmacro
+
+; CHAR IS UPPERCASE
+; 	arg:	1 - char
+;	ret:	cx - "n" false, "y" true
+%macro isupper 1
+	push ax
+
+	mov al, %1
+	mov cx, "y"
+	cmp al, "A"
+	jl %%.false
+	cmp al, "Z"
+	jg %%.false
+	jmp %%.exit
+%%.false:
+	mov cx, "n"
+%%.exit:
+	pop ax
+%endmacro
+
+; CHAR IS 0-9
+; 	arg:	1 - char
+;	ret:	dx - "n" false, "y" true
+%macro isnumeric 1
+	push ax
+
+	mov al, %1
+	mov dx, "y"
+	cmp al, "0"
+	jl %%.false
+	cmp al, "9"
+	jg %%.false
+	jmp %%.exit
+%%.false:
+	mov dx, "n"
+%%.exit:
+	pop ax
+%endmacro
+
+; CHAR IS A-z
+;	arg:	1 - char
+;	ret:	cx - "n" false, "y" true
+%macro isalpha 1
+	push ax
+
+	mov al, %1
+	mov cx, "y"
+	islower al
+	cmp cx, "y"
+	je %%.exit
+	isupper al
+	cmp cx, "y"
+	je %%.exit
+%%.false:
+	mov cx, "n"
+%%.exit:
+	pop ax
+%endmacro
+
+; UPPERCASE TO LOWERCASE
+;	arg:	1 - char
+;	ret:	al - lowercase char
+%macro lower 1
+	push cx
+
+	mov al, %1
+	isalpha al
+	cmp cx, "y"
+	jne %%.exit
+	isupper al
+	cmp cx, "y"
+	jne %%.exit
+	add al, 0x20
+%%.exit:
+	pop cx
+%endmacro
+
+; LOWERCASE TO UPPERCASE
+;	arg:	1 - char
+;	ret:	al - uppercase char
+%macro upper 1
+	push cx
+
+	mov al, %1
+	isalpha al
+	cmp cx, "y"
+	jne %%.exit
+	islower al
+	cmp cx, "y"
+	jne %%.exit
+	sub al, 0x20
+%%.exit:
+	pop cx
+%endmacro
+
+%endif

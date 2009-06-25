@@ -1,0 +1,37 @@
+;----------------------------------------------------------
+; PROGRAM:		Text-Graphics
+; DESCRIPTION:	Macros to create simple figures in textmode
+; AUTHOR:		Alexander Meinke <ameinke@online.de>
+; LICENCE:		Public Domain
+; ASSEMBLER:	NASM 2.05.01
+; LINKER:		ALINK 1.5 (DOS)
+; VERSION:		0.1
+;----------------------------------------------------------
+
+%ifndef TEXTGRAPHICS_MAC
+	%define TEXTGRAPHICS_MAC
+
+%macro rect 5
+; Create an rectangle
+; Arguments:
+;	1 - column					0
+;	2 - row						9
+;	3 - width					80
+;	4 - height					8
+;	5 - attribute + character
+
+	mov ax, 0xB800
+	mov es, ax
+	cld
+	mov di, (%1*2)+(%2*160)
+	mov bx, %4
+%%.loop:
+	mov cx, %3
+	mov ax, %5
+	rep stosw
+	add di, 160-%3*2
+	dec bx
+	jnz	%%.loop
+%endmacro
+
+%endif
