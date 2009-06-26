@@ -1,0 +1,106 @@
+;-----------------------------------------------------
+; PROGRAM:		string
+; DESCRIPTION:	Standard string functions (cdecl)
+; AUTHOR:		Alexander Meinke <ameinke@online.de>
+; LICENCE:		Public Domain
+; ASSEMBLER:	NASM 2.05.01
+; LINKER:		ALINK (DOS)
+; VERSION:		0.1
+;-----------------------------------------------------
+
+
+%ifndef STRING_MAC
+	%define STRING_MAC
+
+; LENGTH OF A "$" TERMINATED STRING
+;	1	-	address of string
+;	2	-	characters
+strlen:
+	mov bp, sp
+	
+	mov si, [bp+4]		; 1. parameter, pushed first
+
+	xor cx, cx
+.loop0:
+	lodsb
+	cmp al, "$"
+	je .exit0
+	inc cx
+	jc .carry0
+	jmp .loop0
+
+.carry0:
+	mov cx, 0x0000
+	neg cx
+.exit0:
+	mov [bp+2], cx		; 2. parameter, pushed second
+	ret
+
+; INTEGER TO ASCII ($!)
+;	1	-	low word of long integer
+;	2	-	high word of long integer
+;	3	-	address for resulting string (min. 10 byte)
+itoa:
+	mov bp, sp
+
+	mov ax, [bp+6]		; 1. parameter
+	mov dx, [bp+4]		; 2. parameter
+	mov di, [bp+2]		; 3. parameter
+
+	add di, 10
+	mov [di], BYTE "$"
+	mov bx, 10
+.loop1:
+	dec di
+	div bx
+	and dx, 0x000F
+	add dl, 0x30
+	mov [di], dl
+	xor dx, dx
+	cmp ax, 0
+	jne .loop1
+
+.exit1:
+	ret
+
+; ASCII ($!) TO INTEGER
+;	1	-	low word of long integer
+;	2	-	high word of long integer
+;	3	-	address to string
+atoi:
+	mov bp, sp
+
+	mov si, [bp+2]
+
+	xor ax, ax
+	xor bx, bx
+	mov cx, 10
+	xor dx, dx
+.loop2:
+	mov bl, [si]
+	cmp bl, "$"
+	je .exit2
+	mul cl
+	and bx, 0x000F
+	add ax, bx
+	jc .carry2
+	inc si
+	jmp .loop2
+
+
+.carry2:
+	inc dx
+	jc .exit2
+	inc si
+	jmp .loop2
+.exit2:
+	mov [bp+6], ax
+	mov [bp+4], dx
+	ret
+
+
+; CONVERT STRING OF 1 AND 0 TO INTEGER
+; CONVERT A BINARY STRING OF 1, 0 TO DECIMAL ASCII STRING
+; STRING TO LOWERCASE
+; STRING TO UPPERCASE
+%endif
