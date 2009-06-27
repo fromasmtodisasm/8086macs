@@ -9,10 +9,23 @@
 ;-----------------------------------------------------
 
 
-%ifndef NEW_STDIO_MAC
-	%define NEW_STDIO_MAC
+%ifndef STDIO_MAC
+	%define STDIO_MAC
 
+SEGMENT DATA USE16
+	STRING:
+	MAX:	db		255
+	ACT:	resb	1
+	BUF:	times	255 db 0
+
+SEGMENT CODE USE16
+
+; COMMENT
+;	What number does Linux use for IVT? e.g. int 0xHH
+;	The function is referenced by value in ah
+; DO WE RUN IN DOS? E.G. DOS STRING ENDS WITH "$"
 %ifdef DOS
+
 
 putc:
 	mov bp, sp
@@ -40,6 +53,8 @@ print:
 	int 0x21
 	ret
 
+; PRINT A "$" TERMINATED STRING WITH NEWLINE (DOS)
+;	1	-	address to string
 printnl:
 	mov bp, sp
 	mov bx, [bp+2]
@@ -54,13 +69,17 @@ getc:
 	int 0x21
 	ret
 
+; READ FROM STANDARD INPUT AND ADD "$"
+;	1	-	address for resulting string
 scan:
 	mov bp, sp
-	mov dx, [bp+2]
+
+	mov si, [bp+2]
+
+	mov dx, si
 	mov ah, 0x0A
 	int 0x21
 
-	mov si, [bp+2]
 	mov bl, [si+1]
 	and bx, 0x00FF
 	mov [si+2+bx], BYTE "$"

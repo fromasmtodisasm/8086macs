@@ -1,0 +1,152 @@
+;-----------------------------------------------------
+; PROGRAM:		string
+; DESCRIPTION:	Standard string macros
+; AUTHOR:		Alexander Meinke <ameinke@online.de>
+; LICENCE:		Public Domain
+; ASSEMBLER:	NASM 2.05.01
+; LINKER:		ALINK (DOS)
+; VERSION:		0.1
+;-----------------------------------------------------
+
+
+%ifndef STRING_MAC
+	%define STRING_MAC
+
+; LENGTH OF A "$" TERMINATED STRING
+; 	arg:	1 - "$" terminated string
+; 	ret:	cx - number of chars
+%macro strlen 1
+	push ax
+	push di
+
+	xor cx, cx
+	mov di, %1
+	mov al, "$"			; terminating char
+%%.loop:
+	scasb				; compare es:di - al
+	je %%.exit			; terminating char reached
+	inc cx
+	cmp cx, 255			; no more than 255 chars
+	je %%.exit
+	jmp %%.loop
+%%.exit:
+	pop di
+	pop ax
+%endmacro
+
+; TODO
+;	check why "isbin" is not working properly
+; CONVERT STRING OF 1 AND 0 TO INTEGER
+;	arg:	1 - string
+;	ret:	bx - integer
+%macro binstrint 1
+	push ax
+	push cx
+	push si
+
+	mov si, %1
+;	isbin si
+;	cmp bx, 0
+;	je %%.nobin
+
+	strlen si
+	xor ax, ax
+	xor bx, bx
+%%.loop:
+	lodsb
+	sub al, 0x30
+	or bl, al
+	cmp cx, 1
+	je %%.exit
+	rol bx, 1
+	dec cx
+	jmp %%.loop
+%%.nobin:
+	mov bx, -1
+%%.exit:
+	pop si
+	pop cx
+	pop ax
+%endmacro
+
+; CONVERT A BINARY STRING OF 1, 0 TO DECIMAL ASCII STRING
+;	Be sure there is enough memory allocated. The ascii string must already
+;	be "$" terminated!
+;	arg:	1 - binary string
+;			2 - ascii string
+;	ret:	none
+%macro binstr2asciistr 2
+	push ax
+	push bx
+	push cx
+	push di
+
+	binstrint %1
+	mov di, %2
+	strlen %2
+	add di, cx
+	dec di
+	mov ax, bx
+	mov bl, 10
+%%.loop:
+	div bl
+	add ah, 0x30
+	mov [di], ah
+	xor ah, ah
+	dec di
+	cmp al, 0
+	jne %%.loop
+
+	pop di
+	pop cx
+	pop bx
+	pop ax
+%endmacro
+
+; STRING TO LOWERCASE
+;	arg:	1 - address of string
+;	ret:	none
+%macro strlower 1
+	push ax
+	push di
+	push cx
+
+	mov di, %1
+	strlen di
+%%.loop:
+	lower [di]
+	mov [di], al
+	inc di
+	dec cx
+	cmp cx, 0
+	jne %%.loop
+%%.exit:
+	pop cx
+	pop di
+	pop ax
+%endmacro
+
+; STRING TO UPPERCASE
+;	arg:	1 - address of string
+;	ret:	none
+%macro strupper 1
+	push ax
+	push di
+	push cx
+
+	mov di, %1
+	strlen di
+%%.loop:
+	upper [di]
+	mov [di], al
+	inc di
+	dec cx
+	cmp cx, 0
+	jne %%.loop
+%%.exit:
+	pop cx
+	pop di
+	pop ax
+%endmacro
+
+%endif

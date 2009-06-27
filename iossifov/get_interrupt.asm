@@ -1,6 +1,6 @@
 ;-----------------------------------------------------
-; PROGRAM:		FunctionCalling
-; DESCRIPTION:	Call functions instead of macros
+; PROGRAM:		Interrupts
+; DESCRIPTION:	Get address of an ISR (Divide by Zero)
 ; AUTHOR:		Alexander Meinke <ameinke@online.de>
 ; LICENCE:		Public Domain
 ; ASSEMBLER:	NASM 2.05.01
@@ -12,15 +12,11 @@ CPU 8086
 
 %include "stdio.mac"
 %include "stdlib.mac"
-%include "string.mac"
 
 SEGMENT DATA USE16
-	msg:	db		"Hello World!$"
-	input:	db		6
-			resb	1
-			times	6 db 0
-	ascii:	times	6 db 0
-	int:	dw 		0
+	msg:	db		"Hello ...$"
+	reg_bx:	times	6 db 0
+	reg_es:	times	6 db 0
 
 
 SEGMENT STACK STACK USE16
@@ -29,59 +25,49 @@ SEGMENT STACK STACK USE16
 
 SEGMENT CODE USE16
 ..start:
-
 	; INIT SEGMENTS
 	mov ax, DATA
 	mov ds, ax
 	mov es, ax
 
+	; SALUT
 	mov ax, msg
 	push ax
 	call printnl
 	pop ax
 
-	mov si, msg
-	mov cx, 12
-.loop:
-	mov ax, [si]
+	; GET CURRENT ADDRESS OF ISR
+	mov ah, 0x35
+	int 0x21		; es:bx -> current address of ISR
 
-	push ax
-	call toupper
-	pop ax
+	mov si, reg_bx
+	push bx
+	push si
+	call itoa
+	pop si
+	pop bx
+
+	mov si, reg_es
+	push es
+	push si
+	call itoa
+	pop si
+	pop es
+
+	mov si, reg_es
+	push si
+	call print
+	pop si
+
+	mov ax, ":"
 	push ax
 	call putc
 	pop ax
-	inc si
-	loop .loop
 
-	mov ax, input
-	push ax
-	call scan
-	pop ax
-
-	call newline
-
-	mov bx, input+2
-	push ax
-	push bx
-	call atoi
-	pop bx
-	pop ax
-
-	mov [int], ax
-
-	mov bx, ascii
-	push ax
-	push bx
-	call itoa
-	pop bx
-	pop ax
-
-	mov bx, ascii
-	push bx
+	mov si, reg_bx
+	push si
 	call printnl
-	pop bx
-
+	pop si
 
 	; DOS - RETURN
 exit:

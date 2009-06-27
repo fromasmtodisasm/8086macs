@@ -5,12 +5,12 @@
 ; LICENCE:		Public Domain
 ; ASSEMBLER:	NASM 2.05.01
 ; LINKER:		ALINK (DOS)
-; VERSION:		0.1
+; VERSION:		0.2
 ;-----------------------------------------------------
 
 %include "stdio.mac"
+%include "stdlib.mac"
 %include "string.mac"
-%include "type.mac"
 
 CPU 8086
 
@@ -48,7 +48,7 @@ SEGMENT DATA USE16
 
 
 SEGMENT STACK STACK USE16
-	stack:		resb	1024
+	stack:		resb	512
 
 
 SEGMENT CODE USE16
@@ -58,79 +58,7 @@ SEGMENT CODE USE16
 	mov ds, ax
 	mov es, ax
 
-	; INPUT
-	mov 	cx, 4
-	mov 	si, msg_partei1
-	mov		di, partei1_ascii
-.loop_in:
-	print	si
-	scan	di
-	newline
-
-	%ifdef DEBUG
-		add		di, 2				; DEBUG - 2 to point to the string.
-		print	di					; DEBUG - Print it.
-		newline
-	%endif
-
-	add		si, 19
-
-	%ifdef DEBUG
-		add		di, 7				; DEBUG - We need to point 9b further.
-	%else
-		add		di, 9
-	%endif
-
-	loop	.loop_in
-
-	; PROCESSING - CONVERT INPUT
-	mov		cx, 4
-	mov		si, partei1_ascii+2
-	mov		di, partei1_dec
-.loop_p0:
-	dedu	si
-	cmp		ax, -1
-	je		.error_not_numeric
-	mov		[di], ax
-
-	%ifdef DEBUG
-		printc	[di]				; DEBUG - If string converted correctly
-	%endif							;		- and the entered number is
-									;		- 33-126 there should be an
-									;		- ascii char.
-	add		si, 9
-	add		di, 2
-	loop	.loop_p0
-
-	; PROCESSING - SUM
-	xor 	ax, ax
-	mov 	cx, 4
-	mov 	si, partei1_dec
-.loop_p1:
-	add 	ax, [si]
-	jc 		.error_overflow
-	add 	si, 2
-	loop	.loop_p1
-
-	%ifdef DEBUG
-		printc	al					; DEBUG - If sum 33-126 there should be
-	%endif							;		- an ascii char.
-
-	mov [partei_dec], ax
-	dude ax, partei_ascii
-
-	; OUTPUT - SUM
-	print msg_partei_ges
-	printnl partei_ascii
-
-	jmp		exit
-
-.error_not_numeric:
-	printnl error_not_numeric
-	jmp		exit
-
-.error_overflow:
-	printnl error_overflow
+	
 
 
 	; DOS - RETURN

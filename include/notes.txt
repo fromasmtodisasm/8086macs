@@ -1,0 +1,7 @@
+NOTES
+=====
+
+1.	Functions
+-------------
+1.1	Implementing new functions should follow the "cdecl" calling convention.
+1.2 A caller function should save bp as the called function changes it.

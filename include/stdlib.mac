@@ -1,0 +1,246 @@
+;-----------------------------------------------------
+; PROGRAM:		stdlib
+; DESCRIPTION:	Standard library functions (cdecl)
+; AUTHOR:		Alexander Meinke <ameinke@online.de>
+; LICENCE:		Public Domain
+; ASSEMBLER:	NASM 2.05.01
+; LINKER:		ALINK (DOS)
+; VERSION:		0.1
+;-----------------------------------------------------
+
+
+%ifndef STDLIB_MAC
+	%define STDLIB_MAC
+
+	%define TRUE	1
+	%define FALSE	0
+
+SEGMENT CODE USE16
+
+; TODO
+;	support for 32 bit long integer
+; INTEGER TO ASCII STRING ($!)
+;	1	-	integer
+;	2	-	address for resulting string (min. 6 byte)
+itoa:
+	mov bp, sp
+
+	mov ax, [bp+4]		; 1. parameter
+	mov di, [bp+2]		; 2. parameter
+
+	add di, 5
+	mov [di], BYTE "$"
+	mov bx, 10
+.loop:
+	xor dx, dx			; prevent divide by zero (div bx -> dx(modulo) ax)
+	dec di
+	div bx
+	and dx, 0x000F
+	add dl, 0x30
+	mov [di], dl
+	cmp ax, 0
+	jne .loop
+
+.exit:
+	ret
+
+; INTEGER TO HEXADECIMAL ASCII STRING ($!)
+;	1	-	integer
+;	2	-	address for resulting string (min. 5 byte)
+itoah:
+	mov bp, sp
+
+	mov ax, [bp+4]
+	mov di, [bp+2]
+
+	add di, 4
+	mov [di], BYTE "$"
+	mov bx, 16
+.loop:
+	xor dx, dx
+	dec di
+	div bx
+	and dx, 0x000F
+
+.exit:
+	ret
+
+; TODO
+;	support for 32 bit long integer
+; ASCII STRING ($!) TO INTEGER
+;	1	-	integer
+;	2	-	address to string
+atoi:
+	mov bp, sp
+
+	mov si, [bp+2]
+
+	xor ax, ax
+	mov bx, 10
+	xor cx, cx
+.loop:
+	mov cl, [si]
+	cmp cl, "$"
+	je .exit
+	mul bx
+	and cx, 0x000F
+	add ax, cx
+	jc .carry
+	inc si
+	jmp .loop
+
+
+.carry:
+	mov ax, -1
+.exit:
+	mov [bp+4], ax
+	ret
+
+; TEST WHETHER ASCII CODE IS A DIGIT
+;	1	-	ascii code
+;	2	-	FALSE if not
+isdigit:
+	mov bp, sp
+
+	mov bx, WORD TRUE
+	mov al, [bp+4]
+	cmp al, "0"
+	jl .no
+	cmp al, "9"
+	jl .exit
+
+.no:
+	mov bx, WORD FALSE
+.exit:
+	mov [bp+2], bx
+	ret
+
+; TEST WHETHER ASCII CODE IS AN LOWERCASE APLHABETIC CHARACTER
+;	1	-	ascii code
+;	2	-	FALSE if not
+islower:
+	mov bp, sp
+
+	mov bx, WORD TRUE
+	mov al, [bp+4]
+	cmp al, "a"
+	jl .no
+	cmp al, "z"
+	jl .exit
+.no:
+	mov bx, WORD FALSE
+.exit:
+	mov [bp+2], bx
+	ret
+
+; TEST WHETHER ASCII CODE IS AN UPPERCASE APLHABETIC CHARACTER
+;	1	-	ascii code
+;	2	-	FALSE if not
+isupper:
+	mov bp, sp
+
+	mov bx, WORD TRUE
+	mov al, [bp+4]
+	cmp al, "A"
+	jl .no
+	cmp al, "Z"
+	jl .exit
+.no:
+	mov bx, WORD FALSE
+.exit:
+	mov [bp+2], bx
+	ret
+
+
+; TEST WHETHER ASCII CODE IS AN ALPHABETIC CHARECTER
+;	1	-	ascii code
+;	2	-	FALSE if not
+isalpha:
+	mov bp, sp
+
+	mov bx, WORD TRUE
+	mov al, [bp+4]
+	cmp al, "A"
+	jl .no
+	cmp al, "Z"
+	jl .exit
+
+	cmp al, "a"
+	jl .no
+	cmp al, "z"
+	jl .exit
+	jmp .exit
+
+.no:
+	mov bx, WORD FALSE
+.exit:
+	mov [bp+2], bx
+	ret
+
+; MAKE ALPHABETIC CAHRECTER LOWERCASE
+;	1	-	alphabetic character
+;	1	-	lowercase alphabetic character. if not alpha, FALSE
+tolower:
+	mov bp, sp
+
+	mov al, [bp+2]
+	push bp
+	push ax
+	push bx
+	call isalpha
+	pop bx
+	pop ax
+	pop bp
+	cmp bx, FALSE
+	je .exit
+
+	push bp
+	push ax
+	push bx
+	call isupper
+	pop bx
+	pop ax
+	pop bp
+	cmp bx, FALSE
+	je .exit
+
+	add al, 0x20
+
+.exit:
+	mov [bp+2], al
+	ret
+
+; MAKE ALPHABETIC CAHRECTER UPPERCASE
+;	1	-	alphabetic character
+;	1	-	uppercase alphabetic character. if not alpha, FALSE
+toupper:
+	mov bp, sp
+
+	mov al, [bp+2]
+	push bp
+	push ax
+	push bx
+	call isalpha
+	pop bx
+	pop ax
+	pop bp
+	cmp bx, FALSE
+	je .exit
+
+	push bp
+	push ax
+	push bx
+	call islower
+	pop bx
+	pop ax
+	pop bp
+	cmp bx, FALSE
+	je .exit
+
+	sub al, 0x20
+
+.exit:
+	mov [bp+2], al
+	ret
+
+%endif
