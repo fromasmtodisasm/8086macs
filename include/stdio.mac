@@ -12,11 +12,11 @@
 %ifndef STDIO_MAC
 	%define STDIO_MAC
 
-SEGMENT DATA USE16
-	STRING:
-	MAX:	db		255
-	ACT:	resb	1
-	BUF:	times	255 db 0
+;SEGMENT DATA USE16
+;	STRING:
+;	MAX:	db		255
+;	ACT:	resb	1
+;	BUF:	times	255 db 0
 
 SEGMENT CODE USE16
 
@@ -26,16 +26,22 @@ SEGMENT CODE USE16
 ; DO WE RUN IN DOS? E.G. DOS STRING ENDS WITH "$"
 %ifdef DOS
 
-
 putc:
 	mov bp, sp
+	pusha
+
 	mov dx, [bp+2]
 	mov ah, 0x02
 	int 0x21
+
+.exit:
+	popa
 	ret
 
 newline:
 	mov bp, sp
+	pusha
+
 	mov bx, 0x0A
 	push bx
 	call putc
@@ -44,35 +50,54 @@ newline:
 	push bx
 	call putc
 	pop bx
+
+.exit:
+	popa
 	ret
 
 print:
 	mov bp, sp
+	pusha
+
 	mov dx, [bp+2]
 	mov ah, 0x09
 	int 0x21
+
+.exit:
+	popa
 	ret
 
 ; PRINT A "$" TERMINATED STRING WITH NEWLINE (DOS)
 ;	1	-	address to string
 printnl:
 	mov bp, sp
+	pusha
+
 	mov bx, [bp+2]
 	push bx
 	call print
 	pop bx
 	call newline
+
+.exit:
+	popa
 	ret
 
 getc:
+	pusha
+
 	mov ah, 0x01
 	int 0x21
+
+.exit:
+	popa
 	ret
 
 ; READ FROM STANDARD INPUT AND ADD "$"
 ;	1	-	address for resulting string
 scan:
 	mov bp, sp
+	pusha
 
 	mov si, [bp+2]
 
@@ -82,7 +107,10 @@ scan:
 
 	mov bl, [si+1]
 	and bx, 0x00FF
-	mov [si+2+bx], BYTE "$"
+	mov [si+bx+2], BYTE "$"
+
+.exit:
+	popa
 	ret
 
 %endif

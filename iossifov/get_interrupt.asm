@@ -1,6 +1,6 @@
 ;-----------------------------------------------------
 ; PROGRAM:		Interrupts
-; DESCRIPTION:	Get address of an ISR (Divide by Zero)
+; DESCRIPTION:	Get address of an ISR (DOS 0x21)
 ; AUTHOR:		Alexander Meinke <ameinke@online.de>
 ; LICENCE:		Public Domain
 ; ASSEMBLER:	NASM 2.05.01
@@ -36,27 +36,28 @@ SEGMENT CODE USE16
 	call printnl
 	pop ax
 
-	; GET CURRENT ADDRESS OF ISR
+	; GET CURRENT ADDRESS OF ISR 0x21
 	mov ah, 0x35
-	int 0x21		; es:bx -> current address of ISR
-
-	mov si, reg_bx
-	push bx
-	push si
-	call itoa
-	pop si
-	pop bx
+	mov al, 0x21	; we want address of DOS ISR 0x21
+	int 0x21		; es:bx -> current address of ISR 0x21
 
 	mov si, reg_es
 	push es
 	push si
-	call itoa
+	call itoah		; convert es to hex ascii representation
 	pop si
 	pop es
 
+	mov si, reg_bx
+	push bx
+	push si
+	call itoah		; convert bx to hex ascii representation
+	pop si
+	pop bx
+
 	mov si, reg_es
 	push si
-	call print
+	call print		; print es address of ISR as hex
 	pop si
 
 	mov ax, ":"
@@ -66,7 +67,7 @@ SEGMENT CODE USE16
 
 	mov si, reg_bx
 	push si
-	call printnl
+	call printnl	; print bx address of ISR as hex
 	pop si
 
 	; DOS - RETURN

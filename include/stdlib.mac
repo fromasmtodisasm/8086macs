@@ -24,6 +24,7 @@ SEGMENT CODE USE16
 ;	2	-	address for resulting string (min. 6 byte)
 itoa:
 	mov bp, sp
+	pusha
 
 	mov ax, [bp+4]		; 1. parameter
 	mov di, [bp+2]		; 2. parameter
@@ -42,6 +43,7 @@ itoa:
 	jne .loop
 
 .exit:
+	popa
 	ret
 
 ; INTEGER TO HEXADECIMAL ASCII STRING ($!)
@@ -49,6 +51,7 @@ itoa:
 ;	2	-	address for resulting string (min. 5 byte)
 itoah:
 	mov bp, sp
+	pusha
 
 	mov ax, [bp+4]
 	mov di, [bp+2]
@@ -62,7 +65,31 @@ itoah:
 	div bx
 	and dx, 0x000F
 
+	cmp dl, 10
+	je .hex
+	cmp dl, 11
+	je .hex
+	cmp dl, 12
+	je .hex
+	cmp dl, 13
+	je .hex
+	cmp dl, 14
+	je .hex
+	cmp dl, 15
+	je .hex
+
+	add dl, 0x30
+	mov [di], dl
+	cmp ax, 0
+	je .exit
+	jmp .loop
+.hex:
+	add dl, 0x37
+	mov [di], dl
+	cmp ax, 0
+	jne .loop
 .exit:
+	popa
 	ret
 
 ; TODO
@@ -72,28 +99,40 @@ itoah:
 ;	2	-	address to string
 atoi:
 	mov bp, sp
+	pusha
 
 	mov si, [bp+2]
 
 	xor ax, ax
 	mov bx, 10
-	xor cx, cx
 .loop:
+	xor cx, cx
 	mov cl, [si]
 	cmp cl, "$"
 	je .exit
+
+;	push cx
+;	push dx
+;	call isdigit
+;	pop dx
+;	pop cx
+
+;	cmp dx, FALSE
+;	je .error
+
 	mul bx
 	and cx, 0x000F
 	add ax, cx
-	jc .carry
+	jc .error
 	inc si
 	jmp .loop
 
 
-.carry:
+.error:
 	mov ax, -1
 .exit:
 	mov [bp+4], ax
+	popa
 	ret
 
 ; TEST WHETHER ASCII CODE IS A DIGIT
@@ -101,6 +140,7 @@ atoi:
 ;	2	-	FALSE if not
 isdigit:
 	mov bp, sp
+	pusha
 
 	mov bx, WORD TRUE
 	mov al, [bp+4]
@@ -113,6 +153,7 @@ isdigit:
 	mov bx, WORD FALSE
 .exit:
 	mov [bp+2], bx
+	popa
 	ret
 
 ; TEST WHETHER ASCII CODE IS AN LOWERCASE APLHABETIC CHARACTER
@@ -120,6 +161,7 @@ isdigit:
 ;	2	-	FALSE if not
 islower:
 	mov bp, sp
+	pusha
 
 	mov bx, WORD TRUE
 	mov al, [bp+4]
@@ -131,6 +173,7 @@ islower:
 	mov bx, WORD FALSE
 .exit:
 	mov [bp+2], bx
+	popa
 	ret
 
 ; TEST WHETHER ASCII CODE IS AN UPPERCASE APLHABETIC CHARACTER
@@ -138,6 +181,7 @@ islower:
 ;	2	-	FALSE if not
 isupper:
 	mov bp, sp
+	pusha
 
 	mov bx, WORD TRUE
 	mov al, [bp+4]
@@ -149,6 +193,7 @@ isupper:
 	mov bx, WORD FALSE
 .exit:
 	mov [bp+2], bx
+	popa
 	ret
 
 
@@ -157,6 +202,7 @@ isupper:
 ;	2	-	FALSE if not
 isalpha:
 	mov bp, sp
+	pusha
 
 	mov bx, WORD TRUE
 	mov al, [bp+4]
@@ -175,6 +221,7 @@ isalpha:
 	mov bx, WORD FALSE
 .exit:
 	mov [bp+2], bx
+	popa
 	ret
 
 ; MAKE ALPHABETIC CAHRECTER LOWERCASE
@@ -182,6 +229,7 @@ isalpha:
 ;	1	-	lowercase alphabetic character. if not alpha, FALSE
 tolower:
 	mov bp, sp
+	pusha
 
 	mov al, [bp+2]
 	push bp
@@ -208,6 +256,7 @@ tolower:
 
 .exit:
 	mov [bp+2], al
+	popa
 	ret
 
 ; MAKE ALPHABETIC CAHRECTER UPPERCASE
@@ -215,6 +264,7 @@ tolower:
 ;	1	-	uppercase alphabetic character. if not alpha, FALSE
 toupper:
 	mov bp, sp
+	pusha
 
 	mov al, [bp+2]
 	push bp
@@ -241,6 +291,7 @@ toupper:
 
 .exit:
 	mov [bp+2], al
+	popa
 	ret
 
 %endif

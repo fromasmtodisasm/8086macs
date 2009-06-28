@@ -16,8 +16,6 @@ CPU 8086
 SEGMENT DATA USE16
 	msg:	db		"Hello ...$"
 	div_0:	db		"Division durch 0!$"
-	reg_bx:	times	6 db 0
-	reg_es:	times	6 db 0
 
 
 SEGMENT STACK STACK USE16
@@ -31,7 +29,8 @@ div_int:
 	call printnl
 	pop ax
 
-	iret
+	iret				; pop cs
+						; pop ip (changing ip does not require jmp!)
 
 
 ..start:
@@ -58,7 +57,9 @@ div_int:
 	; EXPLICIT DIVIDE BY ZERO
 	mov bx, 0
 	mov ax, 5
-	div bl
+	div bl				; push ip
+						; push cs
+						; jmp cs:int -> [0x0000:0x00*4]
 
 	; DOS - RETURN
 exit:
