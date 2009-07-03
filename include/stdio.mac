@@ -12,7 +12,10 @@
 %ifndef STDIO_MAC
 	%define STDIO_MAC
 
-;SEGMENT DATA USE16
+SEGMENT DATA USE16
+	VIDEO:	equ		0xB800
+	FCOLOR:	equ		0x0F00
+	BCOLOR:	equ		0x0000
 ;	STRING:
 ;	MAX:	db		255
 ;	ACT:	resb	1
@@ -20,12 +23,63 @@
 
 SEGMENT CODE USE16
 
+; WRITE A CHARACTER AT ROW, COLUMN
+;	1	-	high byte row, low byte column
+;	2	-	character
+putcxy:
+	mov bp, sp
+	pusha
+
+	mov bx, VIDEO
+	mov es, bx
+
+	mov ax, [bp+4]
+	and ax, 0x00FF
+	mov dx, [bp+2]
+	and dx, 0x00FF
+
+	mov bx, 2
+	mul bl
+	mov di, ax
+
+	mov ax, [bp+4]
+	xchg ah, al
+	and ax, 0x00FF
+	mov bx, 160
+	mul bl
+	add di, ax
+
+	mov ax, FCOLOR
+	or ax, BCOLOR
+	or ax, dx
+	stosw
+
+.exit:
+	popa
+	ret
+
+; WRITE A "$" TERMINATED STRING AT ROW, COLUMN
+;	1	-	high byte row, low byte column
+;	2	-	address of string
+printxy:
+	mov bp, sp
+	pusha
+
+	mov bx, VIDEO
+	mov es, bx
+
+.exit:
+	popa
+	ret
+
 ; COMMENT
 ;	What number does Linux use for IVT? e.g. int 0xHH
 ;	The function is referenced by value in ah
 ; DO WE RUN IN DOS? E.G. DOS STRING ENDS WITH "$"
 %ifdef DOS
 
+; WRITE A CHARACTER (DOS)
+;	1	-	character
 putc:
 	mov bp, sp
 	pusha
@@ -38,6 +92,7 @@ putc:
 	popa
 	ret
 
+; WRITE A NEWLINE WITH <LF><CR> (DOS)
 newline:
 	mov bp, sp
 	pusha
@@ -55,6 +110,8 @@ newline:
 	popa
 	ret
 
+; WRITE A "$" TERMINATED STRING (DOS)
+;	1	-	address of string
 print:
 	mov bp, sp
 	pusha
@@ -67,7 +124,7 @@ print:
 	popa
 	ret
 
-; PRINT A "$" TERMINATED STRING WITH NEWLINE (DOS)
+; WRITE A "$" TERMINATED STRING WITH NEWLINE (DOS)
 ;	1	-	address to string
 printnl:
 	mov bp, sp
@@ -83,6 +140,8 @@ printnl:
 	popa
 	ret
 
+; READ A CHARACTER WITH ECHO (DOS)
+;	1	-	character read
 getc:
 	pusha
 

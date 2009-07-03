@@ -11,6 +11,7 @@
 %include "stdio.mac"
 %include "stdlib.mac"
 %include "string.mac"
+%include "math.mac"
 
 CPU 8086
 
@@ -23,7 +24,7 @@ SEGMENT DATA USE16
 	msg_partei2:		db		"Stimmen Partei 2: $"
 	msg_partei3:		db		"Stimmen Partei 3: $"
 	msg_partei4:		db		"Stimmen Partei 4: $"
-	msg_partei_ges:		db		"Stimmen insgesamt: $"
+	msg_partei:			db		"Stimmen insgesamt: $"
 	partei1_ascii:		db		MAX
 						resb	ACT
 						times	TIM db 0
@@ -37,9 +38,14 @@ SEGMENT DATA USE16
 						resb	ACT
 						times	TIM db 0
 	partei_ascii:		times	TIM db 0
+	partei1_per:		times	TIM db 0
+	partei2_per:		times	TIM db 0
+	partei3_per:		times	TIM db 0
+	partei4_per:		times	TIM db 0
 	error_not_numeric:	db	"ERROR: Eine der Eingaben ist keine Ziffer!$"
 	error_overflow:		db	"ERROR: Die Anzahl der Gesamtstimmen ist "
 						db	"groesser als 65535!$"
+	error_null:			db	"ERROR: Die Anzahl der Gesamtstimmen ist 0!$"
 	partei1_dec:		dw		0
 	partei2_dec:		dw		0
 	partei3_dec:		dw		0
@@ -87,8 +93,7 @@ SEGMENT CODE USE16
 	pop si
 	pop ax
 
-	cmp ax, -1
-	je .not_numeric
+	jc .not_numeric
 
 	mov [di], ax
 	add si, 9
@@ -107,6 +112,8 @@ SEGMENT CODE USE16
 
 	mov di, partei_dec
 	mov [di], ax
+	cmp ax, 0
+	je .null
 
 	; PROCESSING - CONVERT SUM TO ASCII
 	mov ax, [partei_dec]
@@ -118,23 +125,65 @@ SEGMENT CODE USE16
 	pop ax
 
 	; OUTPUT - PRINT SUM OF VOICES
+	mov di, msg_partei
+	push di
+	call print
+	pop di
+
 	mov di, partei_ascii
 	push di
 	call printnl
 	pop di
 
+	; PROCESSING - CALCULATE PERCENTAGE OF EACH PARTY
+	mov si, partei1_dec
+	mov di, partei_dec
+	mov cx, 6
+	mov bx, partei1_per
+.loop3:
+	mov ax, [si]
+	mov dx, [di]
+	push ax
+	push dx
+	push cx
+	push bx
+	call percent
+	add sp, 8
+	add si, 2
+	add bx, 7
+	cmp si, partei4_dec+2
+	jne .loop3
+
+	mov si, partei1_per
+	mov cx, 4
+.loop4:
+	push si
+	call printnl
+	pop si
+	add si, 7
+	loop .loop4
+	
 	jmp exit
 
+	; ERROR - ONE OF THE USERINPUT IS NOT NUMERIC
 .not_numeric:
 	mov ax, error_not_numeric
 	push ax
 	call printnl
 	pop ax
-
 	jmp exit
 
+	; ERROR - SUM OF VOICES IS GREATER THAN 65535
 .overflow:
 	mov ax, error_overflow
+	push ax
+	call printnl
+	pop ax
+	jmp exit
+	
+	; ERROR - SUM OF VOICES IS 0
+.null:
+	mov ax, error_null
 	push ax
 	call printnl
 	pop ax

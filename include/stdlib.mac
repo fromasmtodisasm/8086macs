@@ -103,6 +103,7 @@ atoi:
 
 	mov si, [bp+2]
 
+	clc
 	xor ax, ax
 	mov bx, 10
 .loop:
@@ -111,14 +112,16 @@ atoi:
 	cmp cl, "$"
 	je .exit
 
-;	push cx
-;	push dx
-;	call isdigit
-;	pop dx
-;	pop cx
+	push bp
+	push cx
+	push dx
+	call isdigit
+	pop dx
+	pop cx
+	pop bp
 
-;	cmp dx, FALSE
-;	je .error
+	cmp dx, FALSE
+	je .error
 
 	mul bx
 	and cx, 0x000F
@@ -129,7 +132,8 @@ atoi:
 
 
 .error:
-	mov ax, -1
+;	mov ax, -1
+	stc
 .exit:
 	mov [bp+4], ax
 	popa
@@ -147,7 +151,7 @@ isdigit:
 	cmp al, "0"
 	jl .no
 	cmp al, "9"
-	jl .exit
+	jle .exit
 
 .no:
 	mov bx, WORD FALSE

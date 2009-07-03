@@ -8,11 +8,11 @@
 ; VERSION:		0.1
 ;-----------------------------------------------------
 
-CPU 8086
-
 %include "stdio.mac"
 %include "stdlib.mac"
 %include "string.mac"
+
+CPU 8086
 
 SEGMENT DATA USE16
 	msg:	db		"Hello World!$"
@@ -40,47 +40,56 @@ SEGMENT CODE USE16
 	call printnl
 	pop ax
 
-	mov si, msg
-	mov cx, 12
-.loop:
-	mov ax, [si]
+;	mov si, msg
+;	mov cx, 12
+;.loop:
+;	mov ax, [si]
 
-	push ax
-	call toupper
-	pop ax
-	push ax
-	call putc
-	pop ax
-	inc si
-	loop .loop
+;	push ax
+;	call toupper
+;	pop ax
+;	push ax
+;	call putc
+;	pop ax
+;	inc si
+;	loop .loop
 
-	mov ax, input
-	push ax
-	call scan
-	pop ax
+;	mov ax, input
+;	push ax
+;	call scan
+;	pop ax
 
-	call newline
+;	call newline
 
-	mov bx, input+2
+;	mov bx, input+2
+;	push ax
+;	push bx
+;	call atoi
+;	pop bx
+;	pop ax
+
+;	mov [int], ax
+
+;	mov bx, ascii
+;	push ax
+;	push bx
+;	call itoa
+;	pop bx
+;	pop ax
+
+;	mov bx, ascii
+;	push bx
+;	call printnl
+;	pop bx
+
+	mov ah, 12
+	mov al, 40
+	mov bx, "X"
 	push ax
 	push bx
-	call atoi
+	call putcxy
 	pop bx
 	pop ax
-
-	mov [int], ax
-
-	mov bx, ascii
-	push ax
-	push bx
-	call itoa
-	pop bx
-	pop ax
-
-	mov bx, ascii
-	push bx
-	call printnl
-	pop bx
 
 
 	; DOS - RETURN
