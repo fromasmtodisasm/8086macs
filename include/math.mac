@@ -1,0 +1,98 @@
+;-----------------------------------------------------
+; PROGRAM:		Math
+; DESCRIPTION:	Arithmetic and logical operations.
+; AUTHOR:		Alexander Meinke <ameinke@online.de>
+; LICENCE:		Public Domain
+; ASSEMBLER:	NASM 2.05.01
+; LINKER:		ALINK (DOS)
+; VERSION:		0.1
+;-----------------------------------------------------
+
+%ifndef MATH_MAC
+	%define MATH_MAC
+
+SEGMENT CODE USE16
+
+; TODO
+;	Instead of creating a string, a data structure that is treated as an
+;	floating point number expressed with mantissa could be imaginable.
+; RETURNING REST OF AN DIVISION AS FLOATINGPOINT STRING ($!)
+;	1	-	dividend
+;	2	-	divisor
+;	3	-	maximum precission
+;	4	-	address to resulting string (min. precission bytes + 1)
+divide:
+	mov bp, sp
+	pusha
+
+	mov ax, [bp+8]
+	mov bx, [bp+6]
+	mov cx, [bp+4]
+	mov di, [bp+2]
+
+	xor dx, dx
+
+.loop:
+	div bx
+	add ax, 0x30
+	mov [di], al
+	inc di
+	cmp dx, 0
+	je .break
+	mov ax, dx
+	mov dx, 10
+	mul dx
+	loop .loop
+
+.break:
+	mov [di], BYTE "$"
+.exit:
+	popa
+	ret
+
+; TODO
+;	Implement the description of the function. Currently it calls divide
+;	internaly.
+; MULTIPLY BY 100 AFTER DIVIDE
+;	1	-	address of string
+percent:
+	mov bp, sp
+	pusha
+
+	mov ax, [bp+8]
+	mov bx, [bp+6]
+	mov cx, [bp+4]
+	mov di, [bp+2]
+
+	push ax
+	push bx
+	push cx
+	push di
+	call divide
+	pop di
+	pop cx
+	pop bx
+	pop ax
+
+	cmp ax, 0
+	je .exit
+
+	cmp [di], BYTE "0"
+	jne .hundred
+	mov ax, [di+1]
+	mov [di], ax
+	mov ax, [di+2]
+	mov [di+1], ax
+	mov ah, ","
+	mov [di+1], ax
+	jmp .exit
+
+.hundred:
+	mov [di+1], BYTE "0"
+	mov [di+2], BYTE "0"
+	mov [di+3], BYTE "$"
+.exit:
+	popa
+	ret
+
+%endif
