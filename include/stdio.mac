@@ -65,8 +65,22 @@ printxy:
 	mov bp, sp
 	pusha
 
-	mov bx, VIDEO
-	mov es, bx
+	mov si, [bp+2]
+	mov ax, [bp+4]
+
+.loop:
+	mov bl, [si]
+	cmp bl, "$"
+	je .exit
+	push ax
+	push bx
+	call putcxy
+	pop bx
+	pop ax
+
+	inc si
+	inc ax
+	jmp .loop
 
 .exit:
 	popa

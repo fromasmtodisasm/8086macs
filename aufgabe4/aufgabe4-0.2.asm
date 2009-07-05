@@ -1,6 +1,6 @@
 ;-----------------------------------------------------
-; PROGRAM:		PARTEI
-; DESCRIPTION:	Balkendiagramm einer Wahl
+; PROGRAM:		PARTY
+; DESCRIPTION:	Bar chart of an election.
 ; AUTHOR:		Alexander Meinke <ameinke@online.de>
 ; LICENCE:		Public Domain
 ; ASSEMBLER:	NASM 2.05.01
@@ -8,16 +8,19 @@
 ; VERSION:		0.2
 ;-----------------------------------------------------
 
+%define MAX 0x06
+%define ACT 0x01
+%define TIM	0x07
+
+%define DOS
+
 %include "stdio.mac"
 %include "stdlib.mac"
 %include "string.mac"
 %include "math.mac"
+%include "text_graphics.mac"
 
 CPU 8086
-
-%define MAX 0x06
-%define ACT 0x01
-%define TIM	0x07
 
 SEGMENT DATA USE16
 	msg_partei1:		db		"Stimmen Partei 1: $"
@@ -25,6 +28,7 @@ SEGMENT DATA USE16
 	msg_partei3:		db		"Stimmen Partei 3: $"
 	msg_partei4:		db		"Stimmen Partei 4: $"
 	msg_partei:			db		"Stimmen insgesamt: $"
+
 	partei1_ascii:		db		MAX
 						resb	ACT
 						times	TIM db 0
@@ -38,19 +42,27 @@ SEGMENT DATA USE16
 						resb	ACT
 						times	TIM db 0
 	partei_ascii:		times	TIM db 0
-	partei1_per:		times	TIM db 0
-	partei2_per:		times	TIM db 0
-	partei3_per:		times	TIM db 0
-	partei4_per:		times	TIM db 0
-	error_not_numeric:	db	"ERROR: Eine der Eingaben ist keine Ziffer!$"
-	error_overflow:		db	"ERROR: Die Anzahl der Gesamtstimmen ist "
-						db	"groesser als 65535!$"
-	error_null:			db	"ERROR: Die Anzahl der Gesamtstimmen ist 0!$"
+
 	partei1_dec:		dw		0
 	partei2_dec:		dw		0
 	partei3_dec:		dw		0
 	partei4_dec:		dw		0
 	partei_dec:			dw		0
+	
+	partei1_per:		times	TIM db 0
+	partei2_per:		times	TIM db 0
+	partei3_per:		times	TIM db 0
+	partei4_per:		times	TIM db 0
+
+	partei1_bar:		db		0
+	partei2_bar:		db		0
+	partei3_bar:		db		0
+	partei4_bar:		db		0
+
+	error_not_numeric:	db	"ERROR: Eine der Eingaben ist keine Ziffer!$"
+	error_overflow:		db	"ERROR: Die Anzahl der Gesamtstimmen ist "
+						db	"groesser als 65535!$"
+	error_null:			db	"ERROR: Die Anzahl der Gesamtstimmen ist 0!$"
 
 
 SEGMENT STACK STACK USE16
@@ -64,11 +76,22 @@ SEGMENT CODE USE16
 	mov ds, ax
 	mov es, ax
 
-	; INPUT - GET VOICES FOR EVERY PARTY
+	; OUTPUT - CLEAR SCREEN
+;	call cls
+	mov cx, 24
+.loop0:
+	call newline
+	loop .loop0
+
+	xor dx, dx
+	mov ah, 0x02
+	int 0x10
+
+	; INPUT - GET VOICES FOR EACH PARTY
 	mov cx, 4
 	mov si, msg_partei1
 	mov di, partei1_ascii
-.loop0:
+.loop1:
 	push si
 	call print
 	pop si
@@ -80,13 +103,13 @@ SEGMENT CODE USE16
 	add di, 9
 	
 	call newline
-	loop .loop0
+	loop .loop1
 
 	; PROCESSING - CONVERT USER INPUT TO INTEGER
 	mov cx, 4
 	mov si, partei1_ascii+2
 	mov di, partei1_dec
-.loop1:
+.loop2:
 	push ax
 	push si
 	call atoi
@@ -98,17 +121,17 @@ SEGMENT CODE USE16
 	mov [di], ax
 	add si, 9
 	add di, 2
-	loop .loop1
+	loop .loop2
 
 	; PROCESSING - SUM EACH VOICES
 	mov cx, 4
 	mov si, partei1_dec
 	xor ax, ax
-.loop2:
+.loop3:
 	add ax, [si]
 	jc .overflow
 	add si, 2
-	loop .loop2
+	loop .loop3
 
 	mov di, partei_dec
 	mov [di], ax
@@ -138,9 +161,9 @@ SEGMENT CODE USE16
 	; PROCESSING - CALCULATE PERCENTAGE OF EACH PARTY
 	mov si, partei1_dec
 	mov di, partei_dec
-	mov cx, 6
+	mov cx, 5
 	mov bx, partei1_per
-.loop3:
+.loop4:
 	mov ax, [si]
 	mov dx, [di]
 	push ax
@@ -152,17 +175,78 @@ SEGMENT CODE USE16
 	add si, 2
 	add bx, 7
 	cmp si, partei4_dec+2
-	jne .loop3
+	jne .loop4
 
+
+	; PROCESSING - CALCULATE LENGTH OF EACH BAR
 	mov si, partei1_per
 	mov cx, 4
-.loop4:
+	mov bh, 6
+	mov bl, 0
+	mov dh, 0x1F
+	mov dl, " "
+.loop5:
+	push ax
 	push si
-	call printnl
+	call atoi
 	pop si
+	pop ax
+
+	push bx
+	mov bx, 80
+	mul bl
+	pop bx
+
+	push dx
+	push bx
+	xor dx, dx
+	mov bx, 100
+	div bx
+	pop bx
+	pop dx
+
+	; OUTPUT - DRAW BAR OF PARTY
+	xchg ah, al
+	mov al, 3
+	push bx
+	push ax
+	push dx
+	call draw_rect
+	pop dx
+	pop ax
+	pop bx
+
 	add si, 7
-	loop .loop4
-	
+	add bh, 3
+	add dh, 0x10
+	loop .loop5
+
+	; OUTPUT - PERCENTAL OF EACH PARTY
+	mov si, partei1_per
+	mov cx, 4
+	mov ah, 7
+	mov al, 0
+.loop6:
+	push ax
+	push si
+	call printxy
+	pop si
+	pop ax
+
+	push ax
+	add al, 6
+	mov bx, "%"
+	push ax
+	push bx
+	call putcxy
+	pop bx
+	pop ax
+	pop ax
+
+	add si, 7
+	add ah, 3
+	loop .loop6
+
 	jmp exit
 
 	; ERROR - ONE OF THE USERINPUT IS NOT NUMERIC
@@ -191,5 +275,10 @@ SEGMENT CODE USE16
 
 	; DOS - RETURN
 exit:
+	mov cx, 14
+.loop6:
+	call newline
+	loop .loop6
+
 	mov ah, 0x4C
 	int 0x21

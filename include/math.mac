@@ -45,7 +45,8 @@ divide:
 	loop .loop
 
 .break:
-	mov [di], BYTE "$"
+	mov [di], BYTE "0"
+	mov [di+1], BYTE "$"
 .exit:
 	popa
 	ret

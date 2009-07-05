@@ -11,27 +11,81 @@
 %ifndef TEXTGRAPHICS_MAC
 	%define TEXTGRAPHICS_MAC
 
-%macro rect 5
-; Create an rectangle
-; Arguments:
-;	1 - column					0
-;	2 - row						9
-;	3 - width					80
-;	4 - height					8
-;	5 - attribute + character
+; CLEAR SCREEN
+cls:
+	pusha
+
+	mov ax, 0
+	mov bh, 80
+	mov bl, 25
+	mov ch, 0x0F
+	mov cl, " "
+
+	push ax
+	push bx
+	push cx
+	call draw_rect
+	pop cx
+	pop bx
+	pop ax
+
+	xor dx, dx
+	mov bh, 0
+	mov ah, 2
+	int 0x10
+
+.exit:
+	popa
+	ret
+
+; DRAW AN RECTANGLE
+;	1	-	high byte row, low byte column
+;	2	-	high byte width, low byte height
+;	3	-	high byte attribute, low byte character
+draw_rect:
+	mov bp, sp
+	pusha
+	push es
 
 	mov ax, 0xB800
 	mov es, ax
-	cld
-	mov di, (%1*2)+(%2*160)
-	mov bx, %4
-%%.loop:
-	mov cx, %3
-	mov ax, %5
+	xor di, di
+
+	mov ax, [bp+6]
+	mov bx, 2
+	and ax, 0x00FF
+	mul bl
+	add di, ax
+
+	mov ax, [bp+6]
+	mov bx, 160
+	xchg ah, al
+	and ax, 0x00FF
+	mul bl
+	add di, ax
+
+	mov bx, [bp+4]
+	and bx, 0x00FF
+
+.loop:
+	mov cx, [bp+4]
+	xchg cl, ch
+	and cx, 0x00FF
+	mov ax, [bp+2]
 	rep stosw
-	add di, 160-%3*2
+	add di, 160
+	mov dx, 2
+	mov ax, [bp+4]
+	xchg al, ah
+	and ax, 0x00FF
+	mul dl
+	sub di, ax
 	dec bx
-	jnz	%%.loop
-%endmacro
+	jnz .loop
+	
+.exit:
+	pop es
+	popa
+	ret
 
 %endif

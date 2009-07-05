@@ -11,6 +11,7 @@
 %include "stdio.mac"
 %include "stdlib.mac"
 %include "string.mac"
+%include "text_graphics.mac"
 
 CPU 8086
 
@@ -82,13 +83,36 @@ SEGMENT CODE USE16
 ;	call printnl
 ;	pop bx
 
+;	mov ah, 12
+;	mov al, 40
+;	mov bx, "X"
+;	push ax
+;	push bx
+;	call putcxy
+;	pop bx
+;	pop ax
+
+;	mov ah, 3
+;	mov al, 0
+;	mov bh, 40
+;	mov bl, 3
+;	mov ch, 0x2F
+;	mov cl, " "
+;	push ax
+;	push bx
+;	push cx
+;	call draw_rect
+;	pop cx
+;	pop bx
+;	pop ax
+
 	mov ah, 12
 	mov al, 40
-	mov bx, "X"
+	mov si, msg
 	push ax
-	push bx
-	call putcxy
-	pop bx
+	push si
+	call printxy
+	pop si
 	pop ax
 
 
